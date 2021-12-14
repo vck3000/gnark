@@ -19,9 +19,9 @@ package cs_test
 import (
 	"bytes"
 	"github.com/consensys/gnark-crypto/ecc"
-	"github.com/consensys/gnark/backend"
 	_ "github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/frontend/cs/r1cs"
 	"github.com/consensys/gnark/internal/backend/circuits"
 	"reflect"
 	"testing"
@@ -35,16 +35,16 @@ func TestSerialization(t *testing.T) {
 
 	for name, circuit := range circuits.Circuits {
 
-		r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, circuit.Circuit)
+		ccs, err := frontend.Compile(r1cs.Builder(ecc.BN254), circuit.Circuit)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if testing.Short() && r1cs.GetNbConstraints() > 50 {
+		if testing.Short() && ccs.GetNbConstraints() > 50 {
 			continue
 		}
 
 		// copmpile a second time to ensure determinism
-		r1cs2, err := frontend.Compile(ecc.BN254, backend.GROTH16, circuit.Circuit)
+		r1cs2, err := frontend.Compile(r1cs.Builder(ecc.BN254), circuit.Circuit)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -54,7 +54,7 @@ func TestSerialization(t *testing.T) {
 			t.Log(name)
 			var err error
 			var written, read int64
-			written, err = r1cs.WriteTo(&buffer)
+			written, err = ccs.WriteTo(&buffer)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -67,7 +67,7 @@ func TestSerialization(t *testing.T) {
 				t.Fatal("didn't read same number of bytes we wrote")
 			}
 			// compare original and reconstructed
-			if !reflect.DeepEqual(r1cs, &reconstructed) {
+			if !reflect.DeepEqual(ccs, &reconstructed) {
 				t.Fatal("round trip serialization failed")
 			}
 		}
@@ -75,7 +75,7 @@ func TestSerialization(t *testing.T) {
 		// ensure determinism in compilation / serialization / reconstruction
 		{
 			buffer.Reset()
-			n, err := r1cs.WriteTo(&buffer)
+			n, err := ccs.WriteTo(&buffer)
 			if err != nil {
 				t.Fatal(err)
 			}

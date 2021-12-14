@@ -363,8 +363,8 @@ func (assert *Assert) fuzzer(fuzzer filler, circuit, w frontend.Circuit, b backe
 }
 
 // compile the given circuit for given curve and backend, if not already present in cache
-func (assert *Assert) compile(circuit frontend.Circuit, curveID ecc.ID, backendID backend.ID, compileOpts []func(opt *frontend.CompileOption) error) (compiled.ConstraintSystem, error) {
-	key := curveID.String() + backendID.String() + reflect.TypeOf(circuit).String()
+func (assert *Assert) compile(circuit frontend.Circuit, builder frontend.Builder, compileOpts []func(opt *frontend.CompileOption) error) (compiled.ConstraintSystem, error) {
+	key := builder.Curve().String() + builder.Backend().String() + reflect.TypeOf(circuit).String()
 
 	// check if we already compiled it
 	if ccs, ok := assert.compiled[key]; ok {
@@ -372,13 +372,13 @@ func (assert *Assert) compile(circuit frontend.Circuit, curveID ecc.ID, backendI
 		return ccs, nil
 	}
 	// else compile it and ensure it is deterministic
-	ccs, err := frontend.Compile(curveID, backendID, circuit, compileOpts...)
+	ccs, err := frontend.Compile(builder, circuit, compileOpts...)
 	// ccs, err := compiler.Compile(curveID, backendID, circuit, compileOpts...)
 	if err != nil {
 		return nil, err
 	}
 
-	_ccs, err := frontend.Compile(curveID, backendID, circuit, compileOpts...)
+	_ccs, err := frontend.Compile(builder, circuit, compileOpts...)
 	// _ccs, err := compiler.Compile(curveID, backendID, circuit, compileOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrCompilationNotDeterministic, err)

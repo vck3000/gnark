@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/consensys/gnark/frontend/cs/plonk"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/internal/backend/compiled"
 	"github.com/consensys/gnark-crypto/ecc"
@@ -41,7 +42,7 @@ func referenceCircuit() (compiled.ConstraintSystem, frontend.Circuit, *kzg.SRS) 
 	circuit := refCircuit{
 		nbConstraints: nbConstraints,
 	}
-	ccs, err := frontend.Compile(curve.ID, backend.PLONK, &circuit)
+	ccs, err := frontend.Compile(plonk.Builder(curve.ID), &circuit)
 	if err != nil {
 		panic(err)
 	}
