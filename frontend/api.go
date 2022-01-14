@@ -75,6 +75,10 @@ type API interface {
 	// a and b must be 0 or 1
 	And(a, b Variable) Variable
 
+	// LessThan returns a < b
+	// a and b must be 0 or 1
+	LessThan(a, b Variable) Variable
+
 	// ---------------------------------------------------------------------------------------------
 	// Conditionals
 

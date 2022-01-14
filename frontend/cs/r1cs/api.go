@@ -315,6 +315,43 @@ func (system *r1CS) And(_a, _b frontend.Variable) frontend.Variable {
 	return res
 }
 
+// Returns 1 if a < b. Else 0.
+func (system *r1CS) LessThan(a, b frontend.Variable) frontend.Variable {
+	aBits := system.ToBinary(a)
+	bBits := system.ToBinary(b)
+
+	var output frontend.Variable
+	output = 0
+
+	// This section performs Compare()
+	// Output is 1 if a > b
+	// Output is 0 if a == b
+	// Output is -1 if a < b
+
+	// Backwards due to little endian
+	for i := len(aBits) - 1; i >= 0; i-- {
+		system.AssertIsBoolean(aBits[i])
+		system.AssertIsBoolean(bBits[i])
+
+		aIsOne := aBits[i]
+		bIsOne := bBits[i]
+
+		aIsNotOne := system.IsZero(aBits[i])
+		bIsNotOne := system.IsZero(bBits[i])
+
+		aBeatsB := system.And(aIsOne, bIsNotOne)
+		bBeatsA := system.And(bIsOne, aIsNotOne)
+
+		newOutput := system.Select(aBeatsB, 1, 0)
+		newOutput = system.Select(bBeatsA, -1, newOutput)
+
+		output = system.Select(system.IsZero(output), newOutput, output)
+	}
+
+	// Now, convert output of Convert() into LessThan()
+	return system.IsZero(system.Sub(output, -1))
+}
+
 // IsZero returns 1 if i1 is zero, 0 otherwise
 func (system *r1CS) IsZero(i1 frontend.Variable) frontend.Variable {
 	vars, _ := system.toVariables(i1)
